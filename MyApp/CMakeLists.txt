@@ -1,0 +1,5 @@
+cmake_minimum_required(VERSION 2.8)
+project(super_project)
+add_subdirectory(native)
+add_subdirectory(MyThread)
+add_subdirectory(Demo)

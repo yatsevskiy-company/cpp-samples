@@ -1,0 +1,5 @@
+cmake_minimum_required(VERSION 2.8)
+project(demo)
+set(source main.cpp)
+add_executable(demo ${source})
+target_link_libraries(demo mythread native)

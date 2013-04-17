@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="MyApp" default="build">
+
+    <loadproperties srcFile="project.properties" />
+    <property name="aidl.path.dir" value="${basedir}/src" />
+    <property environment="env"/>
+    <property name="sdk.dir" value="${env.SDK_HOME}" />
+    <import file="${sdk.dir}/tools/ant/build.xml"/>
+
+    <!-- Path with all JAR files location except custom android platform classes -->
+    <path id="jars.ref">
+        <!-- <pathelement location="${basedir}/jars"/> -->
+        <fileset dir="${basedir}/jars">
+                  <include name="*.jar"/>
+        </fileset>
+    </path>
+
+    <!-- Path with all JAR files for translating into DEX file -->
+    <path id="out.dex.jar.input.ref">
+        <path refid="jars.ref"/>
+    </path>
+
+    <!-- Path with all JAVA files -->
+    <path id="src.ref">
+        <pathelement location="${basedir}/src"/>
+        <pathelement location="${basedir}/gen"/>
+    </path>
+
+    <!-- Generate classes from AIDL files of the reader_common project -->
+    <target name="-code-R-gen" depends="-code-gen">
+        <echo>----------</echo>
+        <echo>Handling aidl files...</echo>
+        <aidl
+            executable="${aidl}"
+            framework="${project.target.framework.aidl}"
+            libraryBinAidlFolderPathRefid="project.library.bin.aidl.folder.path"
+            genFolder="${gen.absolute.dir}"
+            aidlOutFolder="${out.aidl.absolute.dir}">
+                <source path="${aidl.path.dir}"/>
+                <source path="${source.absolute.dir}"/>
+        </aidl>
+    </target>
+
+    <!-- Override original target to turn verbose off -->
+    <target name="-crunch">
+        <exec executable="${aapt}" taskName="crunch">
+            <arg value="crunch" />
+            <arg value="-S" />
+            <arg path="${resource.absolute.dir}" />
+            <arg value="-C" />
+            <arg path="${out.res.absolute.dir}" />
+        </exec>
+    </target>
+
+    <!-- Override original target to include all sources including submodules and prepend path of custom android classes -->
+    <target name="-compile" depends="-build-setup, -pre-build, -code-R-gen, -pre-compile">
+    <echo>Compilation with 3dfx.jar... </echo>
+        <javac
+            encoding="${java.encoding}"
+            includeantruntime="false"
+            extdirs=""
+            source="${java.source}"
+            target="${java.target}"
+            debug="true"
+            destdir="${out.classes.absolute.dir}"
+            verbose="${verbose}"
+            classpathref="jars.ref"
+            bootclasspathref="project.target.class.path">
+                <compilerarg value="-Xbootclasspath/p:${toString:jars.ref}"/>
+                <src refid="src.ref" />
+
+        </javac>
+    </target>
+
+    <target name="build" depends="clean, debug">
+        <echo>Application was built successfully.</echo>
+    </target>
+
+    <!-- Check for OS family to know an extension of the adb tool -->
+    <if>
+        <condition>
+            <os family="unix"/>
+        </condition>
+        <then>
+            <property name="adb" value="${android.platform.tools.dir}/adb"/>
+        </then>
+        <else>
+            <property name="adb" value="${android.platform.tools.dir}/adb.exe"/>
+        </else>
+    </if>
+    
+    <!-- Install APK file into the usb device -->
+    <target name="install">
+        <echo>Uninstall existing application on the device</echo>
+
+        <!-- Exec adb tool and install application -->
+        <exec executable="${adb}">
+            <arg value="uninstall"/>
+            <arg value="com.samsung.myapp"/>
+        </exec>
+
+
+        <echo>Install on the device</echo>
+        
+        <!-- Exec adb tool and install application -->
+        <exec executable="${adb}">
+            <arg value="-d"/>
+            <arg value="install"/>
+            <arg value="-r"/>
+            <arg value="${out.absolute.dir}/MyApp-debug.apk"/>
+        </exec>
+    </target>
+    
+    <!-- Run the application on the usb device -->
+    <target name="run">
+        <echo>Run the application</echo>
+                
+        <!-- Exec adb tool and run application -->
+        <exec executable="${adb}">
+            <arg value="shell"/>
+            <arg value="am"/>
+            <arg value="start"/>
+            <arg value="-a"/>
+            <arg value="android.intent.action.MAIN"/>
+            <arg value="-n"/>
+        <!-- arg value="com.samsung.myapp/android.app.NativeActivity"/ -->
+            <arg value="com.samsung.myapp/com.samsung.myapp.MainActivity"/>
+        </exec>
+    </target>
+    
+    <!-- Build, install and run the application on the usb device -->
+    <target name="all" depends="build, install, run"/>
+
+</project>

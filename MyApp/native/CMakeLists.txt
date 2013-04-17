@@ -1,0 +1,21 @@
+cmake_minimum_required(VERSION 2.8)
+project(native)
+set(source src/OpenGlSurface.c src/Test3.cpp)
+add_library(native SHARED ${source})
+include_directories(${PROJECT_SOURCE_DIR}/include)
+
+if(ANDROID)
+  target_link_libraries(native log GLESv2)
+endif(ANDROID)
+
+if(NOT ANDROID)
+  find_package(OpenGL REQUIRED)
+  include_directories(${OpenGL_INCLUDE_DIRS})
+  link_directories(${OpenGL_LIBRARY_DIRS})
+  add_definitions(${OpenGL_DEFINITIONS})
+  if(NOT OPENGL_FOUND)
+    message(ERROR " OPENGL not found!")
+  endif(NOT OPENGL_FOUND)
+  
+  target_link_libraries(native ${OPENGL_LIBRARIES})
+endif(NOT ANDROID)
