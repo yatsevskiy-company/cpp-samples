@@ -1,6 +1,10 @@
 a.out
 *.o
+*.so
 *.so.*
 *.a
 *~
 *.orig
+build/
+bin/
+jni/
